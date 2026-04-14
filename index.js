@@ -335,6 +335,46 @@ app.post("/submit-request", async (req, res) => {
       );
   }
 });
+// ==========================================
+// 🚀 STATUS & ARCHIVE MANAGEMENT (VERBOSE)
+// ==========================================
+/**
+ * Handles professional repair status updates.
+ * Includes logic for Pending, In Progress, Completed, and Denied.
+ */
+app.post("/update-repair-status/:id", async (req, res) => {
+  const { status, email } = req.body;
+
+  try {
+    // Verbose Logic Gate: Update the specific record in the live database
+    const updateQuery = "UPDATE repairs SET status = $1 WHERE id = $2";
+    await pool.query(updateQuery, [status, req.params.id]);
+
+    // Success UI: Automatically returns you to the dashboard
+    res.send(`
+      <script>
+        alert("Status Updated to: ${status}");
+        window.location.href = "/dashboard?email=${email}";
+      </script>
+    `);
+  } catch (error) {
+    console.error("[CRITICAL_UPDATE_FAULT]", error.message);
+    res.status(500).send("<h1>Database Update Fault</h1>");
+  }
+});
+
+/**
+ * Handles the removal of mistake entries from the database.
+ */
+app.get("/delete-repair/:id", async (req, res) => {
+  const { email } = req.query;
+  try {
+    await pool.query("DELETE FROM repairs WHERE id = $1", [req.params.id]);
+    res.redirect("/dashboard?email=" + email);
+  } catch (err) {
+    res.status(500).send("Deletion Fault.");
+  }
+});
 
 // ==========================================
 // SERVER INITIALIZATION
