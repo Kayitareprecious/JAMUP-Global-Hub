@@ -18,7 +18,34 @@ const ADMINS = [
   "kayitareprecious057@gmail.com",
 ];
 
-// --- DASHBOARD ROUTE ---
+// --- VISITOR PAGE (HOME) ---
+app.get("/", (req, res) => {
+  res.send(`
+    <body style="margin:0; font-family:sans-serif; background:#0f172a; color:white; text-align:center; padding:50px;">
+      <h1 style="color:#38bdf8;">JAMUP Eletrônica HUB</h1>
+      <p style="font-size:18px;">Expert Repairs for your Electronics. Send a request below!</p>
+      <form action="/request" method="POST" style="background:#1e293b; padding:30px; border-radius:15px; display:inline-block; text-align:left; border:1px solid #334155; width:350px;">
+        Name: <br><input name="name" required style="width:100%; padding:10px; margin:10px 0; border-radius:5px; background:#0f172a; color:white; border:1px solid #475569;"><br>
+        Problem & Device: <br><textarea name="request" required style="width:100%; padding:10px; margin:10px 0; border-radius:5px; background:#0f172a; color:white; border:1px solid #475569; height:80px;"></textarea><br>
+        <button type="submit" style="width:100%; background:#38bdf8; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; color:#0f172a;">Send Request</button>
+      </form>
+    </body>
+  `);
+});
+
+// --- VISITOR SUBMISSION ---
+app.post("/request", async (req, res) => {
+  const { name, request } = req.body;
+  await pool.query(
+    "INSERT INTO repairs (customer_name, customer_request, status) VALUES ($1, $2, $3)",
+    [name, request, "New Request"],
+  );
+  res.send(
+    '<body style="background:#0f172a; color:white; text-align:center; padding:50px;"><h1>Request Received!</h1><p>We will contact you soon. <a href="/" style="color:#38bdf8;">Go Back</a></p></body>',
+  );
+});
+
+// --- ADMIN DASHBOARD ---
 app.get("/dashboard", async (req, res) => {
   const email = req.query.email;
   if (ADMINS.includes(email)) {
@@ -26,54 +53,54 @@ app.get("/dashboard", async (req, res) => {
       const stats = await pool.query(
         "SELECT COUNT(*) as total, SUM(cost) as revenue FROM repairs",
       );
+      const history = await pool.query(
+        "SELECT * FROM repairs ORDER BY created_at DESC",
+      );
+
+      let rows = history.rows
+        .map(
+          (r) => `
+        <tr style="border-bottom:1px solid #334155;">
+          <td style="padding:12px;">${r.customer_name || "Admin"}</td>
+          <td style="padding:12px;">${r.customer_request || r.device}</td>
+          <td style="padding:12px; color:#22c55e;">$${r.cost || 0}</td>
+          <td style="padding:12px;">${r.status}</td>
+          <td style="padding:12px;"><a href="/delete/${r.id}?email=${email}" style="color:#ef4444; text-decoration:none; font-size:12px;">Delete</a></td>
+        </tr>`,
+        )
+        .join("");
+
       res.send(`
-        <body style="margin:0; font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0f172a; color: white;">
-          <div style="max-width: 1000px; margin: auto; padding: 40px;">
-            <header style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; border-bottom: 1px solid #1e293b; padding-bottom: 20px;">
-              <h1 style="margin:0; color: #38bdf8;">JAMUP <span style="color:white; font-weight:300;">Eletrônica HUB</span></h1>
-              <span style="background: #1e293b; padding: 8px 15px; border-radius: 20px; font-size: 14px;">Admin: ${email}</span>
-            </header>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px;">
-              <div style="background: #1e293b; padding: 30px; border-radius: 15px; border: 1px solid #334155;">
-                <h3 style="margin:0; color: #94a3b8; font-size: 12px; text-transform: uppercase;">Total Repair Units</h3>
-                <p style="font-size: 48px; margin: 10px 0 0 0; font-weight: bold;">${stats.rows.total}</p>
-              </div>
-              <div style="background: #1e293b; padding: 30px; border-radius: 15px; border: 1px solid #334155;">
-                <h3 style="margin:0; color: #94a3b8; font-size: 12px; text-transform: uppercase;">Total Revenue</h3>
-                <p style="font-size: 48px; margin: 10px 0 0 0; font-weight: bold; color: #22c55e;">$${stats.rows.revenue || 0}</p>
-              </div>
-            </div>
-            <div style="background: #1e293b; padding: 30px; border-radius: 15px; border: 1px solid #334155;">
-              <h2 style="margin-top:0;">Register New Service</h2>
-              <form action="/add" method="POST" style="display: flex; gap: 15px;">
-                <input name="device" placeholder="Device Description" required style="flex: 2; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white;">
-                <input name="cost" type="number" placeholder="Cost ($)" required style="flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: white;">
-                <input type="hidden" name="email" value="${email}">
-                <button type="submit" style="background: #38bdf8; color: #0f172a; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer;">Save Record</button>
-              </form>
-            </div>
+        <body style="margin:0; font-family:sans-serif; background:#0f172a; color:white; padding:40px;">
+          <h1 style="color:#38bdf8;">JAMUP HUB Admin</h1>
+          <div style="display:flex; gap:20px; margin-bottom:30px;">
+            <div style="background:#1e293b; padding:20px; border-radius:10px; flex:1;"><h3>Total Units</h3><p style="font-size:32px; margin:0;">${stats.rows.total}</p></div>
+            <div style="background:#1e293b; padding:20px; border-radius:10px; flex:1;"><h3>Revenue</h3><p style="font-size:32px; margin:0; color:#22c55e;">$${stats.rows.revenue || 0}</p></div>
           </div>
+          <h2>Recent Activity</h2>
+          <table style="width:100%; border-collapse:collapse; background:#1e293b; border-radius:10px;">
+            <tr style="background:#334155; text-align:left;"><th style="padding:12px;">Client</th><th style="padding:12px;">Job</th><th style="padding:12px;">Cost</th><th style="padding:12px;">Status</th><th style="padding:12px;">Action</th></tr>
+            ${rows || '<tr><td colspan="5" style="padding:20px; text-align:center;">No activity found</td></tr>'}
+          </table>
         </body>
       `);
     } catch (err) {
-      res.status(500).send("Database Error: " + err.message);
+      res.send("Database Error: " + err.message);
     }
   } else {
     res.status(403).send("Access Denied");
   }
 });
 
-app.post("/add", async (req, res) => {
-  const { device, cost, email } = req.body;
-  await pool.query("INSERT INTO repairs (device, cost) VALUES ($1, $2)", [
-    device,
-    cost,
-  ]);
-  res.redirect(`/dashboard?email=${email}`);
+// --- DELETE ROUTE ---
+app.get("/delete/:id", async (req, res) => {
+  const email = req.query.email;
+  if (ADMINS.includes(email)) {
+    await pool.query("DELETE FROM repairs WHERE id = $1", [req.params.id]);
+    res.redirect(`/dashboard?email=${email}`);
+  } else {
+    res.status(403).send("Unauthorized");
+  }
 });
 
-app.get("/", (req, res) =>
-  res.send("<h1>JAMUP HUB</h1><p>Admin Login Required</p>"),
-);
-
-app.listen(3000, () => console.log("🚀 JAMUP Hub is Live!"));
+app.listen(3000, () => console.log("🚀 JAMUP Hub Ready!"));
