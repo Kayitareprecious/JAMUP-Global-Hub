@@ -96,9 +96,11 @@ app.post("/submit-request", async (req, res) => {
       [name, location, problem],
     );
     res.send(
-      UI_SHELL(
-        `<h1>Success!</h1><p>The JAMUP team will contact you soon.</p><a href="/" class="btn">Back Home</a>`,
-      ),
+      UI_SHELL(`
+      <h1 style="color:#38bdf8;">Success!</h1>
+      <p>The JAMUP team will contact you soon.</p>
+      <a href="/" class="btn">Back Home</a>
+    `),
     );
   } catch (err) {
     console.error("Database Fault:", err.message);
@@ -113,9 +115,9 @@ app.get("/admin-login", (req, res) => {
       <div class="card">
         <h2 style="color:#38bdf8; margin:0;">Admin Access</h2>
         <form action="/dashboard" method="POST">
-          <input type="email" name="email" placeholder="Admin Email" required>
-          <input type="password" name="password" placeholder="Master Password" required>
-          <button type="submit" class="btn" style="width:100%;">LOGIN</button>
+          <input type="email" name="email" placeholder="Admin Email" required style="width:100%; padding:10px; margin-bottom:10px;">
+          <input type="password" name="password" placeholder="Master Password" required style="width:100%; padding:10px; margin-bottom:10px;">
+          <button type="submit" class="btn" style="width:100%; font-weight:bold; cursor:pointer;">LOGIN</button>
         </form>
       </div>
     </div>
