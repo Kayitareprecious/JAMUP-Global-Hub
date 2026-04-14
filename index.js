@@ -90,10 +90,9 @@ app.get("/", (req, res) => {
 app.post("/submit-request", async (req, res) => {
   const { name, location, problem } = req.body;
   try {
-    // FIX: Using the columns we verified in the shell
+    // These names MUST match the shell command: customer_name, location, customer_request
     await pool.query(
       "INSERT INTO repairs (customer_name, location, customer_request) VALUES ($1, $2, $3)",
-
       [name, location, problem],
     );
     res.send(
@@ -102,6 +101,7 @@ app.post("/submit-request", async (req, res) => {
       ),
     );
   } catch (err) {
+    console.error("Database Fault:", err.message);
     res.status(500).send("Database Fault: " + err.message);
   }
 });
