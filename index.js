@@ -19,16 +19,35 @@ const ADMINS = [
 ];
 
 // --- VISITOR PAGE (HOME) ---
+// --- VISITOR PAGE (HOME) ---
 app.get("/", (req, res) => {
   res.send(`
-    <body style="margin:0; font-family:sans-serif; background:#0f172a; color:white; text-align:center; padding:50px;">
-      <h1 style="color:#38bdf8;">JAMUP Eletrônica HUB</h1>
-      <p style="font-size:18px;">Expert Repairs for your Electronics. Send a request below!</p>
-      <form action="/request" method="POST" style="background:#1e293b; padding:30px; border-radius:15px; display:inline-block; text-align:left; border:1px solid #334155; width:350px;">
-        Name: <br><input name="name" required style="width:100%; padding:10px; margin:10px 0; border-radius:5px; background:#0f172a; color:white; border:1px solid #475569;"><br>
-        Problem & Device: <br><textarea name="request" required style="width:100%; padding:10px; margin:10px 0; border-radius:5px; background:#0f172a; color:white; border:1px solid #475569; height:80px;"></textarea><br>
-        <button type="submit" style="width:100%; background:#38bdf8; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; color:#0f172a;">Send Request</button>
-      </form>
+    <body style="margin:0; font-family:'Segoe UI', sans-serif; background:#0f172a; color:white;">
+      <!-- Modern Navigation Bar -->
+      <nav style="display:flex; justify-content:space-between; align-items:center; padding:15px 50px; background:#1e293b; border-bottom:1px solid #334155;">
+        <h2 style="margin:0; color:#38bdf8; font-weight:bold;">JAMUP <span style="color:white; font-weight:300;">HUB</span></h2>
+        <div style="display:flex; gap:20px; align-items:center;">
+          <a href="mailto:jamupglobal@gmail.com" style="color:#94a3b8; text-decoration:none; font-size:14px; font-weight:bold;">CONTACT US</a>
+          <!-- The Admin Portal Button -->
+          <a href="/dashboard?email=kayitareprecious057@gmail.com" style="background:#38bdf8; color:#0f172a; padding:8px 20px; border-radius:5px; text-decoration:none; font-weight:bold; font-size:13px;">ADMIN LOGIN</a>
+        </div>
+      </nav>
+
+      <!-- Main Section -->
+      <div style="text-align:center; padding:80px 20px;">
+        <h1 style="font-size:48px; margin-bottom:10px; font-weight:800;">Expert Electronics <span style="color:#38bdf8;">Repairs.</span></h1>
+        <p style="font-size:18px; color:#94a3b8; max-width:600px; margin:auto; margin-bottom:40px;">Request professional service for your devices. Fast, reliable, and secure.</p>
+
+        <form action="/request" method="POST" style="background:#1e293b; padding:30px; border-radius:15px; display:inline-block; text-align:left; border:1px solid #334155; width:360px; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+          <label style="font-size:12px; color:#94a3b8; text-transform:uppercase; font-weight:bold;">Your Full Name</label>
+          <input name="name" required style="width:100%; padding:12px; margin:8px 0 20px 0; border-radius:5px; background:#0f172a; color:white; border:1px solid #475569; box-sizing: border-box;">
+
+          <label style="font-size:12px; color:#94a3b8; text-transform:uppercase; font-weight:bold;">Device & Problem Details</label>
+          <textarea name="request" required style="width:100%; padding:12px; margin:8px 0 20px 0; border-radius:5px; background:#0f172a; color:white; border:1px solid #475569; height:100px; box-sizing: border-box;"></textarea>
+
+          <button type="submit" style="width:100%; background:#38bdf8; padding:12px; border:none; border-radius:5px; font-weight:bold; cursor:pointer; color:#0f172a; text-transform:uppercase; letter-spacing:1px;">Send Repair Request</button>
+        </form>
+      </div>
     </body>
   `);
 });
