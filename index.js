@@ -124,33 +124,145 @@ app.get("/admin-login", (req, res) => {
   `),
   );
 });
+// ==========================================
+// 📊 ENTERPRISE ANALYTICS & PDF GENERATION
+// ==========================================
+/**
+ * Route: Generates a professional Master Report.
+ * Verbose logic to fetch all database records and format them for the Elite Five.
+ */
+app.get("/generate-report", async (req, res) => {
+  const { email } = req.query;
 
+  // Security Gate: Only the Elite Five can generate reports
+  if (!AUTHORIZED_ADMINS.includes(email)) {
+    return res
+      .status(403)
+      .send(
+        "<h1>Access Denied</h1><p>You are not authorized to view the Master Report.</p>",
+      );
+  }
+
+  try {
+    const reportData = await pool.query(
+      "SELECT * FROM repairs ORDER BY created_at DESC",
+    );
+
+    // UI: Professional Print-Ready Report View
+    res.send(`
+      <body style="font-family:'Segoe UI', sans-serif; padding:40px; color:#1e293b; background:#f8fafc;">
+        <div style="max-width:900px; margin:auto; background:white; padding:40px; border-radius:10px; box-shadow:0 0 20px rgba(0,0,0,0.1);">
+          <h1 style="color:#0f172a; border-bottom:3px solid #38bdf8; padding-bottom:10px; margin-top:0;">JAMUP GLOBAL HUB - MASTER REPORT</h1>
+          <p style="font-weight:bold; color:#64748b;">Report Generation Date: ${new Date().toLocaleString()}</p>
+          <table border="1" style="width:100%; border-collapse:collapse; margin-top:30px; border-color:#e2e8f0;">
+            <tr style="background:#f1f5f9; text-align:left;">
+              <th style="padding:12px;">Client Name</th><th style="padding:12px;">Location</th><th style="padding:12px;">Service Task</th><th style="padding:12px;">Status</th><th style="padding:12px;">Cost</th>
+            </tr>
+            ${reportData.rows
+              .map(
+                (r) => `
+              <tr>
+                <td style="padding:12px;">${r.customer_name}</td>
+                <td style="padding:12px;">${r.location}</td>
+                <td style="padding:12px;">${r.customer_request}</td>
+                <td style="padding:12px;">${r.status}</td>
+                <td style="padding:12px; font-weight:bold; color:#16a34a;">$${r.cost || 0}</td>
+              </tr>
+            `,
+              )
+              .join("")}
+          </table>
+          <div style="margin-top:40px; text-align:center;">
+            <button onclick="window.print()" style="padding:12px 30px; background:#38bdf8; color:#0f172a; border:none; border-radius:5px; cursor:pointer; font-weight:bold; text-transform:uppercase;">Print Report / Save as PDF</button>
+            <br><br>
+            <a href="/admin-dashboard?email=${email}" style="color:#64748b; font-size:14px;">Return to Dashboard</a>
+          </div>
+        </div>
+      </body>
+    `);
+  } catch (err) {
+    console.error("[REPORT_ERROR]", err.message);
+    res.status(500).send("Critical Fault in Report Generation Engine.");
+  }
+});
+// ==========================================
+// 📊 MASTER ADMIN DASHBOARD (ANALYTICS)
+// ==========================================
+/**
+ * Route: Private Hub for the Elite Five.
+ * Verbose logic validates credentials and calculates real-time business revenue.
+ */
 app.post("/dashboard", async (req, res) => {
   const { email, password } = req.body;
-  if (!ELITE_FIVE.includes(email) || password !== MASTER_PASS)
-    return res.status(403).send("Denied.");
 
-  const clients = await pool.query("SELECT COUNT(*) as count FROM repairs");
-  const revenue = await pool.query("SELECT SUM(cost) as total FROM repairs");
-  const jobs = await pool.query(
-    "SELECT * FROM repairs ORDER BY created_at DESC",
-  );
+  // Security Gate: Explicit validation of Elite Five & Master Password
+  if (!AUTHORIZED_ADMINS.includes(email) || password !== MASTER_KEY) {
+    return res.status(403).send(
+      UI_SHELL(`
+      <div style="text-align:center; padding-top:100px;">
+        <h1 style="color:#ef4444;">403: Access Denied</h1>
+        <p>Credentials not recognized in the JAMUP Elite Registry.</p>
+        <a href="/admin-login" class="btn">Return to Gateway</a>
+      </div>
+    `),
+    );
+  }
 
-  res.send(
-    UI_SHELL(`
-    <h1>Master Analytics</h1>
-    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:20px; margin:30px 0;">
-      <div class="card"><h3>Clients</h3><p style="font-size:32px;">${clients.rows[0].count}</p></div>
-      <div class="card"><h3>Revenue</h3><p style="font-size:32px; color:#22c55e;">$${revenue.rows[0].total || 0}</p></div>
-    </div>
-    <div class="card" style="padding:0; overflow-x:auto;">
-      <table style="width:100%; border-collapse:collapse; text-align:left;">
-        <tr style="background:#334155;"><th style="padding:15px;">Client</th><th style="padding:15px;">Problem</th><th style="padding:15px;">Status</th></tr>
-        ${jobs.rows.map((j) => `<tr style="border-bottom:1px solid #334155;"><td style="padding:15px;">${j.customer_name}<br><small>📍 ${j.location}</small></td><td style="padding:15px;">${j.customer_request}</td><td style="padding:15px;">${j.status}</td></tr>`).join("")}
-      </table>
-    </div>
-  `),
-  );
+  try {
+    const clientsData = await pool.query(
+      "SELECT COUNT(*) as count FROM repairs",
+    );
+    const revenueData = await pool.query(
+      "SELECT SUM(cost) as total FROM repairs",
+    );
+    const repairsLog = await pool.query(
+      "SELECT * FROM repairs ORDER BY created_at DESC",
+    );
+
+    // UI Engine: Professional Analytics Dashboard (Responsive for Mobile/Tablet)
+    res.send(
+      UI_SHELL(`
+      <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <h1 style="margin:0;">Master <span style="color:#38bdf8;">Analytics</span> Hub</h1>
+        <a href="/generate-report?email=${email}" class="btn" style="font-size:12px; padding:10px 20px;">GENERATE MASTER PDF</a>
+      </div>
+
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:20px; margin:30px 0;">
+        <div class="card" style="border-left:5px solid #38bdf8; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">
+          <h3 style="color:#94a3b8; font-size:12px; text-transform:uppercase; margin:0;">Active Clients</h3>
+          <p style="font-size:36px; font-weight:bold; margin:10px 0;">${clientsData.rows[0].count}</p>
+        </div>
+        <div class="card" style="border-left:5px solid #22c55e; box-shadow: 0 10px 20px rgba(0,0,0,0.3);">
+          <h3 style="color:#94a3b8; font-size:12px; text-transform:uppercase; margin:0;">Total Revenue</h3>
+          <p style="font-size:36px; font-weight:bold; margin:10px 0; color:#22c55e;">$${revenueData.rows[0].total || 0}</p>
+        </div>
+      </div>
+
+      <div class="card" style="padding:0; overflow-x:auto; border-radius:15px; border:1px solid #334155;">
+        <table style="width:100%; border-collapse:collapse; text-align:left; min-width:700px;">
+          <tr style="background:#334155; color:#cbd5e1; text-transform:uppercase; font-size:12px;">
+            <th style="padding:15px;">Client Profile</th><th style="padding:15px;">Service Task</th><th style="padding:15px;">Revenue</th><th style="padding:15px;">Status</th>
+          </tr>
+          ${repairsLog.rows
+            .map(
+              (row) => `
+            <tr style="border-bottom:1px solid #334155; transition: 0.3s;">
+              <td style="padding:15px;"><b>${row.customer_name}</b><br><small style="color:#38bdf8;">📍 ${row.customer_location || "Musanze"}</small></td>
+              <td style="padding:15px;">${row.problem_details}</td>
+              <td style="padding:15px; color:#22c55e; font-weight:bold;">$${row.cost}</td>
+              <td style="padding:15px;"><span style="background:#0f172a; padding:5px 12px; border-radius:6px; font-size:12px; font-weight:bold;">${row.status}</span></td>
+            </tr>
+          `,
+            )
+            .join("")}
+        </table>
+      </div>
+    `),
+    );
+  } catch (err) {
+    console.error("[DASHBOARD_FAULT]", err.message);
+    res.status(500).send("Master Dashboard Failure: Synchronize Database.");
+  }
 });
 
 app.listen(SYSTEM_PORT, () =>
