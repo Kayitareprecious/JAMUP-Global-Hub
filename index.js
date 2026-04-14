@@ -20,6 +20,19 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }
 });
+// --- AUTO-FIX GATEWAY ---
+async function ensureDatabaseStructure() {
+  try {
+    await pool.query('ALTER TABLE repairs ADD COLUMN IF NOT EXISTS customer_name TEXT');
+    await pool.query('ALTER TABLE repairs ADD COLUMN IF NOT EXISTS customer_location TEXT');
+    await pool.query('ALTER TABLE repairs ADD COLUMN IF NOT EXISTS problem_details TEXT');
+    console.log("✅ Render database structure verified and fixed.");
+  } catch (err) {
+    console.log("Database already up to date.");
+  }
+}
+ensureDatabaseStructure();
+
 
 // --- 🔐 SECURITY PROTOCOL ---
 const AUTHORIZED_ADMINS = [
