@@ -93,6 +93,7 @@ app.post("/submit-request", async (req, res) => {
     // FIX: Using the columns we verified in the shell
     await pool.query(
       "INSERT INTO repairs (customer_name, location, customer_request) VALUES ($1, $2, $3)",
+
       [name, location, problem],
     );
     res.send(
