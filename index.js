@@ -285,6 +285,41 @@ app.post("/update-status/:id", async (req, res) => {
     "<body style='background:#0f172a; color:white; text-align:center; padding-top:100px;'><h1>Status Updated</h1><a href='/' style='color:#38bdf8;'>Return Home</a></body>",
   );
 });
+// ==========================================
+// 🚀 VISITOR BOOKING LOGIC (FIXES 502 ERROR)
+// ==========================================
+/**
+ * Handles the "Book a Service" form from the home page.
+ * Verbose logic ensures visitor data is captured in the PostgreSQL database.
+ */
+app.post("/submit-request", async (req, res) => {
+  const { name, location, problem } = req.body;
+  try {
+    // Logic: Inserting data into the verified repairs table
+    await pool.query(
+      "INSERT INTO repairs (customer_name, customer_location, problem_details) VALUES ($1, $2, $3)",
+      [name, location, problem],
+    );
+    res.send(`
+      ${UI_HEADER}
+      <div class="container" style="text-align:center; padding-top:100px;">
+        <div class="card">
+          <h1 style="color:#38bdf8;">Request Received!</h1>
+          <p>The JAMUP Elite Team has been notified of your request.</p>
+          <a href="/" style="color:#38bdf8; text-decoration:none; font-weight:bold;">← BACK TO HOME</a>
+        </div>
+      </div>
+      ${UI_FOOTER}
+    `);
+  } catch (error) {
+    console.error("[SUBMISSION_ERROR]", error.message);
+    res
+      .status(500)
+      .send(
+        "<h1>Database Fault</h1><p>The Hub was unable to sync your request.</p>",
+      );
+  }
+});
 
 // ==========================================
 // SERVER INITIALIZATION
