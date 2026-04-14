@@ -264,27 +264,42 @@ app.post("/admin-dashboard", async (req, res) => {
 
 // --- 🚀 BACKEND PROCESSING ---
 
+/**
+ * Handles professional repair booking submissions.
+ * Includes verbose try/catch blocks and explicit database column mapping.
+ */
 app.post("/submit-request", async (req, res) => {
   const { name, location, problem } = req.body;
-  await pool.query(
-    "INSERT INTO repairs (customer_name, customer_location, problem_details) VALUES ($1, $2, $3)",
-    [name, location, problem],
-  );
-  res.send(
-    "<body style='background:#0f172a; color:white; text-align:center; padding-top:100px;'><h1>Booking Successful!</h1><p>The JAMUP team will contact you soon.</p><a href='/' style='color:#38bdf8;'>Back to Home</a></body>",
-  );
+
+  try {
+    // Explicit Database Insertion Logic
+    const insertQuery =
+      "INSERT INTO repairs (customer_name, customer_location, problem_details) VALUES ($1, $2, $3)";
+    const queryValues = [name, location, problem];
+
+    await pool.query(insertQuery, queryValues);
+
+    // Success UI: Optimized for Mobile, Tablet, and Desktop
+    res.send(`
+      ${UI_HEADER}
+      <div class="container" style="text-align:center; padding-top:100px;">
+        <div class="card" style="border-top: 5px solid #38bdf8;">
+          <h1 style="color:#38bdf8; font-size: 32px;">Request Synchronized!</h1>
+          <p style="font-size: 18px; color: #94a3b8;">The JAMUP Elite Team has successfully received your repair details.</p>
+          <a href="/" style="background:#38bdf8; color:#0f172a; padding:12px 25px; border-radius:8px; text-decoration:none; font-weight:bold; display:inline-block; margin-top:20px;">← RETURN TO HOME</a>
+        </div>
+      </div>
+      ${UI_FOOTER}
+    `);
+  } catch (error) {
+    // Verbose Error Logging for Developer Diagnostics
+    console.error("[CRITICAL_DATABASE_FAULT]", error.message);
+    res
+      .status(500)
+      .send("<h1>Database Fault</h1><p>Error: " + error.message + "</p>");
+  }
 });
 
-app.post("/update-status/:id", async (req, res) => {
-  const { status, email } = req.body;
-  await pool.query("UPDATE repairs SET status = $1 WHERE id = $2", [
-    status,
-    req.params.id,
-  ]);
-  res.send(
-    "<body style='background:#0f172a; color:white; text-align:center; padding-top:100px;'><h1>Status Updated</h1><a href='/' style='color:#38bdf8;'>Return Home</a></body>",
-  );
-});
 // ==========================================
 // 🚀 VISITOR BOOKING LOGIC (FIXES 502 ERROR)
 // ==========================================
