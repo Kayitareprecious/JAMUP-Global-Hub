@@ -1,3 +1,23 @@
+// --- DATABASE AUTO-FIX ---
+// This code ensures the 'repairs' table exists every time the app starts
+pool
+  .query(
+    `
+  CREATE TABLE IF NOT EXISTS repairs (
+    id SERIAL PRIMARY KEY, 
+    device TEXT, 
+    cost INT, 
+    customer_name TEXT, 
+    customer_request TEXT, 
+    status TEXT DEFAULT 'Pending', 
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  )
+`,
+  )
+  .then(() => console.log("✅ Database Table Verified and Ready"))
+  .catch((err) => console.error("❌ Table Creation Error:", err.message));
+// -------------------------
+
 const express = require("express");
 const { Pool } = require("pg");
 require("dotenv").config();
