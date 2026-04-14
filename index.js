@@ -120,13 +120,26 @@ app.get('/contact', (req, res) => { res.send(UI_SHELL(`<h1>Contact <span style="
 // ==========================================
 // 🚀 BACKEND PROCESSING
 // ==========================================
+// --- CONFIRMED FORM SUBMISSION ---
 app.post('/submit-request', async (req, res) => {
   const { name, location, problem } = req.body;
   try {
-    await pool.query('INSERT INTO repairs (customer_name, customer_location, problem_details) VALUES ($1, $2, $3)', [name, location, problem]);
-    res.send(UI_SHELL(`<h1>Request Synchronized!</h1><p>The JAMUP team will contact you shortly.</p><a href="/" class="btn">Back Home</a>`));
-  } catch (err) { res.status(500).send(UI_SHELL(`<h1>Link Fault</h1><p>${err.message}</p>`)); }
+    // These names match your shell output: customer_name, customer_location, problem_details
+    const insertQuery = "INSERT INTO repairs (customer_name, customer_location, problem_details) VALUES ($1, $2, $3)";
+    await pool.query(insertQuery, [name, location, problem]);
+
+    res.send(UI_SHELL(`
+      <h1 style="color:#38bdf8;">Request Received!</h1>
+      <p>The JAMUP team will contact you soon.</p>
+      <a href="/" class="btn">Back Home</a>
+    `));
+  } catch (err) {
+    // This will tell us if Render is still seeing a different database
+    console.error("DB Error on Render:", err.message);
+    res.status(500).send(UI_SHELL(`<h1>Database Fault</h1><p>The server said: ${err.message}</p>`));
+  }
 });
+
 
 // ==========================================
 // 🔐 MASTER ADMIN DASHBOARD
